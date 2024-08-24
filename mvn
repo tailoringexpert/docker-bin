@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# docker container 
+# 	- will run as user executing the script unless MY_UID and/or MY_GID env vars are defined
+# 	- define a system gitconfig using a file credential helper
+#	- will use the host gpg keys
+#	- cache hosts user .m2 repository
+#	
+if [ "$#" -eq 0 ]; then
+	echo "Usage: $0 <maven command line>"
+    exit 2
+fi
+
+
+MY_UID=${MY_UID:=$(id -u)}
+MY_GID=${MY_GID:=$(id -g)}
+
+echo "run maven as $MY_UID:$MY_GID"
+
+docker run -it --rm \
+	-u $MY_UID:$MY_GID \
+	-v $HOME/.gnupg/:/.gnupg/ \
+	-v /run/user/$MY_UID/:/run/user/$MY_UID \
+	-v $HOME/.m2:/home/maven/.m2 \
+        -v $HOME/.git-credentials:/var/tmp/.git-credentials \
+	-v $PWD:/data \
+	-e GPG_TTY=/dev/console \
+	-e TTY=/dev/console \
+	-w /data \
+	tailoringexpert/maven:3.9-eclipse-temurin-17-alpine mvn  -Dmaven.repo.local=/home/maven/.m2 -Dgpg.homedir=//.gnupg  -DargLine="-Dmaven.repo.local=/home/maven/.m2 -Dgpg.homedir=//.gnupg" $*
+	
