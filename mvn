@@ -19,13 +19,13 @@ echo "run maven as $MY_UID:$MY_GID"
 
 docker run -it --rm \
 	-u $MY_UID:$MY_GID \
+        -e GPG_TTY=/dev/console \
+        -e TTY=/dev/console \
 	-v $HOME/.gnupg/:/.gnupg/ \
 	-v /run/user/$MY_UID/:/run/user/$MY_UID \
 	-v $HOME/.m2:/home/maven/.m2 \
         -v $HOME/.git-credentials:/var/tmp/.git-credentials \
 	-v $PWD:/data \
-	-e GPG_TTY=/dev/console \
-	-e TTY=/dev/console \
 	-w /data \
-	tailoringexpert/maven:3.9-eclipse-temurin-17-alpine mvn  -Dmaven.repo.local=/home/maven/.m2 -Dgpg.homedir=//.gnupg  -DargLine="-Dmaven.repo.local=/home/maven/.m2 -Dgpg.homedir=//.gnupg" $*
+	tailoringexpert/maven:3.9-eclipse-temurin-17-alpine mvn  -Dmaven.repo.local=/home/maven/.m2/repository -Dgpg.homedir=//.gnupg  -DargLine="-Dmaven.repo.local=/home/maven/.m2/repository -Dgpg.homedir=//.gnupg" $*
 	

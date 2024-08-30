@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+        echo "Usage: $0 <ansible-playbook command line>"
+    exit 2
+fi
+
+if [ -z "${ANSIBLE_ROLES_PATH}" ]; then 
+	echo "Please set env ANSIBLE_ROLES_PATH to local roles directories."
+    exit 2
+fi
+
+ANSIBLE_USER=${ANSIBLE_USER:=ansible}
+ANSIBLE_CONFIG=${ANSIBLE_CONFIG:=/data/ansible.cfg}
+MY_UID=${MY_UID:=1001}
+MY_GID=${MY_GID:=1001}
+ansible_user_roles_path=
+ansible_user_roles_volume=
+
+
+# map all (host) ANSIBLE_ROLES_PATH to container volumes and pathes
+OLDIFS="$IFS" IFS=":" paths=($ANSIBLE_ROLES_PATH) IFS="$OLDIFS"
+for index in "${!paths[@]}"
+do
+
+	path=$(sed "s/$USER/$ANSIBLE_USER/g" <<< "${paths[index]}")
+	if [ $index -gt 0 ] ; then 
+		ansible_user_roles_path+=":"
+	fi;
+	ansible_user_roles_path+="/home/$ANSIBLE_USER/roles/repo${index}"
+	ansible_user_roles_volume+="-v ${paths[index]}:/home/$ANSIBLE_USER/roles/repo${index} "
+
+done
+
+docker run --rm \
+	-h ansible \
+	-e ANSIBLE_CONFIG=$ANSIBLE_CONFIG \
+	-e ANSIBLE_ROLES_PATH=$ansible_user_roles_path \
+	-e USER=$ANSIBLE_USER \
+	-e MY_UID=$MY_UID \
+	-e MY_GID=$MY_GID \
+	${ansible_user_roles_volume} \
+	-v $HOME/.ssh:/home/$ANSIBLE_USER/.ssh \
+	-v $PWD:/data \
+	cytopia/ansible:latest-infra ansible-playbook $@
+

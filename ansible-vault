@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+        echo "Usage: $0 <ansible-vault command line>"
+    exit 2
+fi
+
+ANSIBLE_USER=${ANSIBLE_USER:=ansible}
+ANSIBLE_CONFIG=${ANSIBLE_CONFIG:=/data/ansible.cfg}
+MY_UID=${MY_UID:=1001}
+MY_GID=${MY_GID:=1001}
+
+
+docker run --rm \
+	-h ansible \
+	-e ANSIBLE_CONFIG=$ANSIBLE_CONFIG \
+	-e USER=$ANSIBLE_USER \
+	-e MY_UID=$MY_UID \
+	-e MY_GID=$MY_GID \
+	-v $HOME/.ssh:/home/$ANSIBLE_USER/.ssh \
+	-v $PWD:/data \
+	cytopia/ansible:latest-infra ansible-vault $@
+
