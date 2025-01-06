@@ -6,9 +6,14 @@
 #	- will use the host gpg keys
 #	- cache hosts user .m2 repository
 #	
+if [ -z ${MVN_IMAGE} ]; then
+	echo "Please define MVN_IMAGE environment variable for maven image to use"
+	exit 2
+fi
+
 if [ "$#" -eq 0 ]; then
 	echo "Usage: $0 <maven command line>"
-    exit 2
+    	exit 2
 fi
 
 
@@ -27,5 +32,5 @@ docker run -it --rm \
         -v $HOME/.git-credentials:/var/tmp/.git-credentials \
 	-v $PWD:/data \
 	-w /data \
-	tailoringexpert/maven:3.9-eclipse-temurin-17-alpine mvn  -Dmaven.repo.local=/home/maven/.m2/repository -Dgpg.homedir=//.gnupg  -DargLine="-Dmaven.repo.local=/home/maven/.m2/repository -Dgpg.homedir=//.gnupg" $*
+	${MVN_IMAGE} mvn --settings /home/maven/.m2/settings.xml -Dmaven.repo.local=/home/maven/.m2/repository -Dgpg.homedir=//.gnupg  -DargLine="-Dmaven.repo.local=/home/maven/.m2/repository -Dgpg.homedir=//.gnupg" $*
 	
